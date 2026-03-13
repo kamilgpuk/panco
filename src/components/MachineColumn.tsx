@@ -171,7 +171,12 @@ export function MachineColumn({
 
   // Resize handlers
   const handleResizeMouseDown = useCallback((task: ScheduledTask, e: React.MouseEvent) => {
-    if (task.position === 0) return
+    // Block resize only while the task is actively running
+    const _now = new Date()
+    const _today = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`
+    const _nowMin = _now.getHours() * 60 + _now.getMinutes()
+    const inProgress = task.position === 0 && task.slots.some(s => s.date === _today && s.start_min <= _nowMin && _nowMin < s.end_min)
+    if (inProgress) return
     e.preventDefault()
     e.stopPropagation()
     isResizingRef.current = true
@@ -300,11 +305,11 @@ export function MachineColumn({
           return (
             <div
               key={task.id}
-              className={`absolute left-1 right-1 ${!isFirst ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+              className={`absolute left-1 right-1 ${!isInProgress ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
               style={{ top: topPx, height: heightPx, zIndex: resizeState?.taskId === task.id ? 20 : 10 }}
-              draggable={!isFirst}
+              draggable={!isInProgress}
               onDragStart={e => {
-                if (isFirst || isResizingRef.current) {
+                if (isInProgress || isResizingRef.current) {
                   e.preventDefault()
                   return
                 }
@@ -328,8 +333,8 @@ export function MachineColumn({
                 onContextMenu={onTaskContextMenu}
                 style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '100%' }}
               />
-              {/* Resize handle — bottom edge, only for queued tasks */}
-              {!isFirst && (
+              {/* Resize handle — locked only while task is actively running */}
+              {!isInProgress && (
                 <div
                   draggable={false}
                   className="absolute bottom-0 left-2 right-2 h-2 cursor-ns-resize z-20 group/resize"

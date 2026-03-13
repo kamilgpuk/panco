@@ -184,7 +184,8 @@ function InnerApp() {
     const scheduled = getScheduled(machineId)
     const sorted = [...scheduled].sort((a, b) => a.position - b.position)
     const idx = sorted.findIndex(t => t.id === task.id)
-    if (idx <= 1) return // can't move above active (position 0) or already at top of queue
+    const hasActive = sorted[0] ? isTaskInProgress(sorted[0]) : false
+    if (idx <= (hasActive ? 1 : 0)) return
     const newOrder = [...sorted]
     const [moved] = newOrder.splice(idx, 1)
     newOrder.splice(idx - 1, 0, moved)
@@ -205,7 +206,9 @@ function InnerApp() {
     const scheduled = getScheduled(machineId)
     const sorted = [...scheduled].sort((a, b) => a.position - b.position)
     const idx = sorted.findIndex(t => t.id === task.id)
+    const hasActive = sorted[0] ? isTaskInProgress(sorted[0]) : false
     if (idx >= sorted.length - 1) return
+    if (hasActive && idx === 0) return // can't move a running task down
     const newOrder = [...sorted]
     const [moved] = newOrder.splice(idx, 1)
     newOrder.splice(idx + 1, 0, moved)
@@ -302,8 +305,9 @@ function InnerApp() {
     const scheduled = getScheduled(machineId)
     const sorted = [...scheduled].sort((a, b) => a.position - b.position)
     const idx = sorted.findIndex(t => t.id === task.id)
-    const canMoveUp = idx > 1 // can't move above active task
-    const canMoveDown = idx < sorted.length - 1 && idx > 0
+    const hasActive = sorted[0] ? isTaskInProgress(sorted[0]) : false
+    const canMoveUp = hasActive ? idx > 1 : idx > 0
+    const canMoveDown = idx < sorted.length - 1 && !(hasActive && idx === 0)
     return { canMoveUp, canMoveDown, total: sorted.length }
   }
 
