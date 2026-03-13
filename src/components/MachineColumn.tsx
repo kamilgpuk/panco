@@ -71,6 +71,15 @@ export function MachineColumn({
 
   const sortedTasks = [...tasks].sort((a, b) => a.position - b.position)
 
+  // "In progress" = position 0 AND current time is within one of the task's slots
+  const now = new Date()
+  const todayStr = now.toISOString().split('T')[0]
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  function isTaskInProgress(task: ScheduledTask): boolean {
+    if (task.position !== 0) return false
+    return task.slots.some(s => s.date === todayStr && s.start_min <= nowMin && nowMin < s.end_min)
+  }
+
   // Build queue index map (position > 0 only, 0-based) for alternating colors
   const queueIndexMap = new Map<string, number>()
   sortedTasks.filter(t => t.position > 0).forEach((t, idx) => queueIndexMap.set(t.id, idx))
@@ -276,7 +285,8 @@ export function MachineColumn({
 
         {/* Task blocks */}
         {visibleTasks.map(task => {
-          const isActive = task.position === 0
+          const isFirst = task.position === 0      // controls drag/resize behaviour
+          const isInProgress = isTaskInProgress(task)  // controls "W toku" visual
           const slot = task.slots.find(s => s.date === currentDate)
           if (!slot) return null
 
@@ -290,11 +300,11 @@ export function MachineColumn({
           return (
             <div
               key={task.id}
-              className={`absolute left-1 right-1 ${!isActive ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+              className={`absolute left-1 right-1 ${!isFirst ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
               style={{ top: topPx, height: heightPx, zIndex: resizeState?.taskId === task.id ? 20 : 10 }}
-              draggable={!isActive}
+              draggable={!isFirst}
               onDragStart={e => {
-                if (isActive || isResizingRef.current) {
+                if (isFirst || isResizingRef.current) {
                   e.preventDefault()
                   return
                 }
@@ -309,17 +319,17 @@ export function MachineColumn({
             >
               <TaskBlock
                 task={task}
-                isActive={isActive}
+                isActive={isInProgress}
                 dayStart={dayStartMin}
                 currentDate={currentDate}
                 colorScheme={colorScheme}
-                colorIndex={isActive ? 0 : (queueIndexMap.get(task.id) ?? 0)}
+                colorIndex={isFirst ? 0 : (queueIndexMap.get(task.id) ?? 0)}
                 onClick={onTaskClick}
                 onContextMenu={onTaskContextMenu}
                 style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '100%' }}
               />
               {/* Resize handle — bottom edge, only for queued tasks */}
-              {!isActive && (
+              {!isFirst && (
                 <div
                   draggable={false}
                   className="absolute bottom-0 left-2 right-2 h-2 cursor-ns-resize z-20 group/resize"
