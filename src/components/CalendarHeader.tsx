@@ -68,6 +68,9 @@ export function CalendarHeader({ currentDate, viewDays, onPrev, onNext, onToday,
           ))}
         </div>
 
+        <Link href="/help" className="text-sm text-gray-500 hover:text-gray-900 border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
+          ? Pomoc
+        </Link>
         <Link href="/settings" className="text-sm text-gray-500 hover:text-gray-900 border rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
           ⚙ Ustawienia
         </Link>
