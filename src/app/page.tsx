@@ -289,6 +289,14 @@ function InnerApp() {
     setContextMenu({ task, machineId, position: { x: e.clientX, y: e.clientY } })
   }
 
+  function isTaskInProgress(task: ScheduledTask): boolean {
+    if (task.position !== 0) return false
+    const now = new Date()
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const nowMin = now.getHours() * 60 + now.getMinutes()
+    return task.slots.some(s => s.date === todayStr && s.start_min <= nowMin && nowMin < s.end_min)
+  }
+
   // Get task position info
   function getTaskPositionInfo(task: ScheduledTask, machineId: string) {
     const scheduled = getScheduled(machineId)
@@ -365,7 +373,7 @@ function InnerApp() {
       {/* Context menu */}
       {contextMenu && (() => {
         const { task, machineId, position } = contextMenu
-        const isActive = task.position === 0
+        const isActive = isTaskInProgress(task)
         const posInfo = getTaskPositionInfo(task, machineId)
         return (
           <TaskContextMenu
@@ -390,7 +398,7 @@ function InnerApp() {
       {detailTask && (() => {
         const { task, machineId } = detailTask
         const scheduled = getScheduled(machineId)
-        const isActive = task.position === 0
+        const isActive = isTaskInProgress(task)
         return (
           <TaskDetailPanel
             task={task}
