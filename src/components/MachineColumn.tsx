@@ -73,7 +73,7 @@ export function MachineColumn({
 
   // "In progress" = position 0 AND current time is within one of the task's slots
   const now = new Date()
-  const todayStr = now.toISOString().split('T')[0]
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const nowMin = now.getHours() * 60 + now.getMinutes()
   function isTaskInProgress(task: ScheduledTask): boolean {
     if (task.position !== 0) return false

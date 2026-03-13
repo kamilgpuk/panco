@@ -90,14 +90,18 @@ export function computeSchedule(
 
   // Cursor: [dayIndex, minuteWithinDay]
   let dayIdx = 0
+  const todayKey = dateToKey(new Date())
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
 
   // Advance to first working day
   while (dayIdx < days.length && !days[dayIdx][1].is_working) dayIdx++
   if (dayIdx >= days.length) return sorted.map(t => ({ ...t, slots: [], computed_start: '', computed_end: '' }))
 
-  // Start cursor at max(now, start of working hours) on first working day
-  let cursorMin = Math.max(days[dayIdx][1].start_min, nowMin)
+  // Apply nowMin only when the first working day IS today — future days always start at work start
+  const isToday = days[dayIdx][0] === todayKey
+  let cursorMin = isToday
+    ? Math.max(days[dayIdx][1].start_min, nowMin)
+    : days[dayIdx][1].start_min
   if (cursorMin >= days[dayIdx][1].end_min) {
     dayIdx++
     while (dayIdx < days.length && !days[dayIdx][1].is_working) dayIdx++

@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase'
 
 export async function GET(req: NextRequest) {
   const machineId = req.nextUrl.searchParams.get('machine_id')
-  const query = supabase.from('machine_schedule_overrides').select('*').order('date')
-  if (machineId) query.eq('machine_id', machineId)
+  let query = supabase.from('machine_schedule_overrides').select('*').order('date')
+  if (machineId) query = query.eq('machine_id', machineId)
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
